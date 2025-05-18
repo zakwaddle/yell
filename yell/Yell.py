@@ -1,6 +1,7 @@
 import numbers
 import os
 import inspect
+import textwrap
 from .YellCaller import YellCaller
 from .ColorTools import ColorTools
 from .Theme import theme
@@ -8,6 +9,7 @@ from .Theme import theme
 
 class Yell:
     tools = ColorTools()
+    wrapper = textwrap.TextWrapper()
     _registry = {}
     custom_class_a = None
     custom_class_b = None
@@ -20,10 +22,13 @@ class Yell:
     def __init__(self, width=80, indent=3):
         self.width = width
         self.indent = ' ' * indent
+        self.should_truncate = False
+        self.should_wrap = True
         self.all_quiet = False
         self.use_theme = True
         self._last = None
         self.load_config()
+
 
     def load_config(self):
         def register_modules(the_modules):
@@ -39,10 +44,14 @@ class Yell:
         if not config_dict: return
 
         self.width = config_dict.get('width', self.width)
+        self.should_wrap = config_dict.get('wrap', self.should_wrap)
+        self.should_truncate = config_dict.get('truncate', self.should_truncate)
         self.indent = config_dict.get('indent', self.indent)
         self.all_quiet = config_dict.get('all_quiet', False)
         self.use_theme = config_dict.get('use_theme', True)
+
         if not self.use_theme: self.tools.disable_color()
+        if self.should_wrap: self.wrapper.width = self.width
 
         self.custom_class_a = config_dict.get('custom_class_a')
         self.custom_color_a = config_dict.get('custom_color_a')
@@ -77,8 +86,11 @@ class Yell:
             return text
         buff = self.tools.flup(theme.flup) * flup_num
         new_line = f"{self.tracer(flup_num)}{buff}{user_line}"
-        short = truncate(new_line)
-        return short
+        if self.should_truncate:
+            new_line = truncate(new_line)
+        elif self.should_wrap:
+            new_line = self.wrapper.fill(new_line)
+        return new_line
 
     def __log(self, things, caller, width=75, corners="sharp", color=theme.primary, label=""):
         width = width if self.width > 75 else self.width
