@@ -1,6 +1,13 @@
 LICENSE
 README.md
 setup.py
+./yell/AnsiColors.py
+./yell/ColorText.py
+./yell/ColorTools.py
+./yell/Theme.py
+./yell/Yell.py
+./yell/YellCaller.py
+./yell/__init__.py
 yell/AnsiColors.py
 yell/ColorText.py
 yell/ColorTools.py

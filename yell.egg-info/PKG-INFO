@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: yell
-Version: 0.1.0
+Version: 0.1.1
 Summary: A stylized developer console logger with themes and introspection.
 Author: Zak
 Author-email: zakwaddle@gmail.com
