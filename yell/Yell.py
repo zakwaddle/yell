@@ -9,7 +9,8 @@ from .Theme import theme
 
 class Yell:
     tools = ColorTools()
-    wrapper = textwrap.TextWrapper()
+    wrapper = textwrap
+    # wrapper = textwrap.TextWrapper()
     _registry = {}
     custom_class_a = None
     custom_class_b = None
@@ -51,7 +52,7 @@ class Yell:
         self.use_theme = config_dict.get('use_theme', True)
 
         if not self.use_theme: self.tools.disable_color()
-        if self.should_wrap: self.wrapper.width = self.width
+        # if self.should_wrap: self.wrapper.width = self.width
 
         self.custom_class_a = config_dict.get('custom_class_a')
         self.custom_color_a = config_dict.get('custom_color_a')
@@ -75,26 +76,60 @@ class Yell:
         if we_can_yell:
             print(self.tools.timestamp(), *args, **kwargs)
 
-    def wrap(self, user_line, flup_num=0):
-        def truncate(text):
-            """Truncates text to a specified width while preserving ANSI color codes"""
-            visible_length = self.tools.color_text.find_length(text)
-            if visible_length <= self.width + len(self.indent):
-                return text
-            offset = self.tools.color_text.find_ansi_offset(text) + self.width - 1
-            text = f"{text:.{offset}}...{self.tools.color_text.ansi.end}"
+    def find_ansi_offset(self, text):
+        return self.tools.color_text.find_ansi_offset(str(text))
+
+    def _width_ok(self, text, width=None) -> bool:
+        width = width or self.width
+        visible_length = self.tools.color_text.find_length(str(text))
+        return visible_length <= width + len(self.indent)
+
+    def truncate(self, text, width=None) -> str:
+        """Truncates text to a specified width while preserving ANSI color codes"""
+        width = width or self.width
+        if self._width_ok(text, width):
             return text
+        offset = self.find_ansi_offset(text) + self.width - 1
+        text = f"{text:.{offset}}...{self.tools.color_text.ansi.end}"
+        return text
+
+    def wrap_text(self, text, width=None, **kwargs) -> list[str]:
+        if self._width_ok(text, width):
+            return [text]
+        return self.wrapper.wrap(str(text), width=width or self.width, subsequent_indent=" ↪ ", **kwargs)
+
+    def fill_text(self, text, width=None, **kwargs) -> str:
+        if self._width_ok(text, width):
+            return text
+        return self.wrapper.fill(str(text), width=width or self.width, **kwargs)
+
+    def conform_width(self, *stuff, width=None):
+        width = width or self.width
+        new_stuff = []
+        for thing in stuff:
+            lines = str(thing).split("\n")
+            for line in lines:
+                if self._width_ok(line, width):
+                    new_stuff.append(line)
+                else:
+                    new_stuff.extend(self.wrap_text(line, width=width))
+        return new_stuff
+
+    def wrap(self, user_line, flup_num=0):
         buff = self.tools.flup(theme.flup) * flup_num
-        new_line = f"{self.tracer(flup_num)}{buff}{user_line}"
+
         if self.should_truncate:
-            new_line = truncate(new_line)
+            user_line = self.truncate(user_line)
         elif self.should_wrap:
-            new_line = self.wrapper.fill(new_line)
-        return new_line
+            self.wrapper.width = self.width + self.find_ansi_offset(user_line)
+            user_line = self.fill_text(user_line)
+
+        return f"{self.tracer(flup_num)}{buff}{user_line}"
 
     def __log(self, things, caller, width=75, corners="sharp", color=theme.primary, label=""):
         width = width if self.width > 75 else self.width
         def color_func(a_thing): return self.tools.color(a_thing, color=color)
+
         def box_it(*stuff, color_func_=None, align="^", corners_):
             corners_ = self.tools.corners.get(corners_)  # if corners in self.tools.corners.keys() else "sharp"
             top_line = corners_[0] + ("-" * width) + corners_[1]
@@ -125,7 +160,8 @@ class Yell:
             almost_done = ' '.join([str(ass) for ass in assembled])
             return self.wrap(almost_done, flup_num=caller.lvl)
 
-        boxed = box_it(*things, color_func_=color_func, corners_=corners)
+        fit = self.conform_width(*things, width=width)
+        boxed = box_it(*fit, color_func_=color_func, corners_=corners)
         chain = make_call_chain(prefix=f"-{color_func(label)}- ")
         self.be_heard(chain, *boxed, sep='\n')
 
@@ -231,7 +267,7 @@ class Yell:
 
                 drop_in(f"{squib} {self.tools.color(key, theme.dict_key)}: {handle_non_iterator(val)}")
             squib_len = self.tools.color_text.find_length(squib)
-            drop_in(f"{squib}{self.tools.div(length=self.width - squib_len, color=theme.dict_div)}")
+            drop_in(f"{squib}{self.tools.div(length=self.width - squib_len - len(self.indent), color=theme.dict_div)}")
 
         def handle_list(user_list, plunger):
             plunge = f"{self.indent}{self.tools.pipe(color=theme.list_div)}"
@@ -247,7 +283,7 @@ class Yell:
                 else:
                     drop_in(f"{squib}{self.tools.dash(theme.list_div)} {handle_non_iterator(item)}")
             squib_len = self.tools.color_text.find_length(squib)
-            drop_in(f"{squib}{self.tools.div(length=self.width - squib_len, color=theme.list_div)}")
+            drop_in(f"{squib}{self.tools.div(length=self.width - squib_len - len(self.indent), color=theme.list_div)}")
 
         def handle_value(value, plunger):
             if isinstance(value, dict):
@@ -260,7 +296,7 @@ class Yell:
         for thing in the_stuff:
             handle_value(thing, [])
 
-        return [self.wrap(turd) for turd in bucket]
+        return bucket
 
     def handle_caller(self):
         stuff = inspect.stack()
@@ -318,6 +354,8 @@ class Yell:
             end = '\n'
 
         whatever = self.__user_stuff(words, is_loop=is_loop, lvl=caller.lvl)
+        whatever = self.conform_width(*whatever, width=self.width)
         whole_thing = [*whatever] if is_loop else [beginning, *whatever]
+        whole_thing = [self.wrap(t, flup_num=caller.lvl) for t in whole_thing]
         self.be_heard(*whole_thing, sep='\n', end=end)
         self._last = caller
