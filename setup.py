@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='yell',
-    version='0.1.3',
+    version='0.1.4',
     url='https://github.com/zakwaddle/yell',
     packages=find_packages(where="."),
     package_dir={"": "."},
