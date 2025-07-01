@@ -74,7 +74,7 @@ class Yell:
     def be_heard(self, *args, **kwargs):
         we_can_yell = not self.all_quiet
         if we_can_yell:
-            show_timestamp = kwargs.get('show_timestamp', True)
+            show_timestamp = kwargs.pop('show_timestamp', True)
             if show_timestamp:
                 print(self.tools.timestamp(), *args, **kwargs)
             else:
