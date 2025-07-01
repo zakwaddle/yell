@@ -74,7 +74,11 @@ class Yell:
     def be_heard(self, *args, **kwargs):
         we_can_yell = not self.all_quiet
         if we_can_yell:
-            print(self.tools.timestamp(), *args, **kwargs)
+            show_timestamp = kwargs.get('show_timestamp', True)
+            if show_timestamp:
+                print(self.tools.timestamp(), *args, **kwargs)
+            else:
+                print(*args, **kwargs)
 
     def find_ansi_offset(self, text):
         return self.tools.color_text.find_ansi_offset(str(text))
@@ -357,5 +361,5 @@ class Yell:
         whatever = self.conform_width(*whatever, width=self.width)
         whole_thing = [*whatever] if is_loop else [beginning, *whatever]
         whole_thing = [self.wrap(t, flup_num=caller.lvl) for t in whole_thing]
-        self.be_heard(*whole_thing, sep='\n', end=end)
+        self.be_heard(*whole_thing, sep='\n', end=end, **kwargs)
         self._last = caller
