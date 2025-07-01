@@ -130,7 +130,7 @@ class Yell:
 
         return f"{self.tracer(flup_num)}{buff}{user_line}"
 
-    def __log(self, things, caller, width=75, corners="sharp", color=theme.primary, label=""):
+    def __log(self, things, caller, width=75, corners="sharp", color=theme.primary, label="", **kwargs):
         width = width if self.width > 75 else self.width
         def color_func(a_thing): return self.tools.color(a_thing, color=color)
 
@@ -167,50 +167,51 @@ class Yell:
         fit = self.conform_width(*things, width=width)
         boxed = box_it(*fit, color_func_=color_func, corners_=corners)
         chain = make_call_chain(prefix=f"-{color_func(label)}- ")
-        self.be_heard(chain, *boxed, sep='\n')
+        self.be_heard(chain, *boxed, sep='\n', **kwargs)
 
-    def success(self, *things, width=75):
+    def success(self, *things, width=75, **kwargs):
         caller = self.handle_caller()
         if not caller.on: return
-        self.__log(things, caller, width=width, corners="heavy", color=theme.success, label="SUCCESS")
+        self.__log(things, caller, width=width, corners="heavy", color=theme.success, label="SUCCESS", **kwargs)
 
-    def warning(self, *things, width=75):
+    def warning(self, *things, width=75, **kwargs):
         caller = self.handle_caller()
         if not caller.on: return
-        self.__log(things, caller, width=width, corners="heavy", color=theme.warning, label="WARNING")
+        self.__log(things, caller, width=width, corners="heavy", color=theme.warning, label="WARNING", **kwargs)
 
-    def error(self, *things, width=75):
+    def error(self, *things, width=75, **kwargs):
         caller = self.handle_caller()
         if not caller.on: return
-        self.__log(things, caller, width=width, corners="heavy", color=theme.error, label="ERROR")
+        self.__log(things, caller, width=width, corners="heavy", color=theme.error, label="ERROR", **kwargs)
 
-    def failure(self, *things, width=75):
+    def failure(self, *things, width=75, **kwargs):
         caller = self.handle_caller()
         if not caller.on: return
-        self.__log(things, caller, width=width, corners="heavy", color=theme.failure, label="FAILURE")
+        self.__log(things, caller, width=width, corners="heavy", color=theme.failure, label="FAILURE", **kwargs)
 
-    def info(self, *things, width=75):
+    def info(self, *things, width=75, **kwargs):
         caller = self.handle_caller()
         if not caller.on: return
-        self.__log(things, caller, width=width, corners="round", color=theme.info, label="INFO")
+        self.__log(things, caller, width=width, corners="round", color=theme.info, label="INFO", **kwargs)
 
-    def debug(self, *things, width=75):
+    def debug(self, *things, width=75, **kwargs):
         caller = self.handle_caller()
         if not caller.on: return
-        self.__log(things, caller, width=width, corners="sharp", color=theme.debug, label="DEBUG")
+        self.__log(things, caller, width=width, corners="sharp", color=theme.debug, label="DEBUG", **kwargs)
 
-    def label(self, text, lvl=0):
+    def label(self, text, lvl=0, func_trace: str = None, **kwargs):
         caller = self.handle_caller()
         if not caller.on: return
         file = self.tools.color(caller.name, color=theme.primary)
         caller_name = self.tools.color(caller.last_called_func, color=theme.secondary)
         call_count = self.tools.color(caller.get_func_call_count(caller_name), color=theme.failure)
-        func_trace = f" {file}.{caller_name}() : {call_count}"
+        func_trace = f" {file}.{caller_name}() : {call_count}" if func_trace is None else self.tools.color(func_trace,
+                                                                                                           color=theme.secondary)
         stuff = self.tools.color(text, color=theme.label)
 
         line = f"{self.tracer(lvl=lvl)}{self.tools.arrow_right}  -[ {stuff} ]-  {self.tools.arrow_left} {func_trace}"
         thing = self.wrap(line, flup_num=lvl)
-        self.be_heard(thing, sep='\n')
+        self.be_heard(thing, sep='\n', **kwargs)
 
     def __user_stuff(self, the_stuff, is_loop=False, lvl=0):
         bucket = []
