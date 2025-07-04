@@ -134,12 +134,13 @@ class Yell:
         width = width if self.width > 75 else self.width
         def color_func(a_thing): return self.tools.color(a_thing, color=color)
 
-        def box_it(*stuff, color_func_=None, align="^", corners_):
+        def box_it(*stuff, color_func_=None, align="<", corners_):
             corners_ = self.tools.corners.get(corners_)  # if corners in self.tools.corners.keys() else "sharp"
             top_line = corners_[0] + ("-" * width) + corners_[1]
             bottom_line = corners_[3] + ("-" * width) + corners_[2]
-
-            lines = [f"|{thing:{align}{width}}|" for thing in stuff]
+            split_up = [i.split("\n") for i in stuff]
+            split_up = [item for sublist in split_up for item in sublist]
+            lines = [f"|{thing:{align}{width}}|" for thing in split_up]
             all_the_stuff = [top_line, *lines, bottom_line]
             all_the_stuff = [color_func_(i) for i in all_the_stuff]
             all_the_stuff = [self.wrap(i, flup_num=caller.lvl) for i in all_the_stuff]
@@ -358,7 +359,9 @@ class Yell:
             beginning = f"{self.tracer(caller.lvl)}  {chunk} {title if title else func_trace} {chunk}"
             end = '\n'
 
-        whatever = self.__user_stuff(words, is_loop=is_loop, lvl=caller.lvl)
+        split_up = [i.split("\n") for i in words]
+        split_up = [item for sublist in split_up for item in sublist]
+        whatever = self.__user_stuff(split_up, is_loop=is_loop, lvl=caller.lvl)
         whatever = self.conform_width(*whatever, width=self.width)
         whole_thing = [*whatever] if is_loop else [beginning, *whatever]
         whole_thing = [self.wrap(t, flup_num=caller.lvl) for t in whole_thing]
