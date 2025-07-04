@@ -135,6 +135,7 @@ class Yell:
         def color_func(a_thing): return self.tools.color(a_thing, color=color)
 
         def box_it(*stuff, color_func_=None, align="<", corners_):
+            align = kwargs.pop("align", align)
             corners_ = self.tools.corners.get(corners_)  # if corners in self.tools.corners.keys() else "sharp"
             top_line = corners_[0] + ("-" * width) + corners_[1]
             bottom_line = corners_[3] + ("-" * width) + corners_[2]
@@ -167,6 +168,9 @@ class Yell:
 
         fit = self.conform_width(*things, width=width)
         boxed = box_it(*fit, color_func_=color_func, corners_=corners)
+        use_call_chain = kwargs.pop("use_call_chain", True)
+        if not use_call_chain:
+            return self.be_heard(*boxed, sep='\n', **kwargs)
         chain = make_call_chain(prefix=f"-{color_func(label)}- ")
         self.be_heard(chain, *boxed, sep='\n', **kwargs)
 
