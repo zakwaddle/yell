@@ -370,7 +370,7 @@ class Yell:
                 thing = i.split("\n")
             split_up.append(thing)
 
-        split_up = [item for sublist in split_up for item in sublist]
+        # split_up = [item for sublist in split_up for item in sublist]
         whatever = self.__user_stuff(split_up, is_loop=is_loop, lvl=caller.lvl)
         whatever = self.conform_width(*whatever, width=self.width)
         whole_thing = [*whatever] if is_loop else [beginning, *whatever]
