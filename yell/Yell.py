@@ -363,7 +363,13 @@ class Yell:
             beginning = f"{self.tracer(caller.lvl)}  {chunk} {title if title else func_trace} {chunk}"
             end = '\n'
 
-        split_up = [i.split("\n") for i in words]
+        split_up = []
+        for i in words:
+            thing = i
+            if isinstance(i, str):
+                thing = i.split("\n")
+            split_up.append(thing)
+
         split_up = [item for sublist in split_up for item in sublist]
         whatever = self.__user_stuff(split_up, is_loop=is_loop, lvl=caller.lvl)
         whatever = self.conform_width(*whatever, width=self.width)
